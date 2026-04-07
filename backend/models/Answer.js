@@ -6,6 +6,12 @@ const answerSchema = new mongoose.Schema(
             type: String,  //"planner", "performer", "crew".
             required: true,
         },
+        commonAnswers: [
+            {
+                question: { type: String, required: true },
+                response: { type: String, required: true },
+            },
+        ],
         answers: [
             {
                 questionId: {

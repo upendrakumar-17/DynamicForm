@@ -5,27 +5,16 @@ const Answer = require("../models/Answer");
 const isAdmin = require("../middleware/Admin");
 const { isAuthenticated } = require("../middleware/Auth");
 
-router.post("/", async (req, res) => {
-    try {
-        const { type, answers } = req.body;
+router.post("/answers", async (req, res) => {
+  const { type, answers, commonAnswers } = req.body;
 
-        if (!type || !answers) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
-
-        const newResponse = await Answer.create({
-            type,
-            answers,
-        });
-
-        res.status(201).json({
-            message: "Form submitted successfully",
-            data: newResponse,
-        });
-    } catch (error) {
-        console.error("ERROR:", error.message);
-        res.status(500).json({ message: error.message });
-    }
+  try {
+    const newAnswer = new Answer({ type, answers, commonAnswers });
+    await newAnswer.save();
+    res.status(201).json(newAnswer);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
 });
 
 router.get("/answers", isAuthenticated, isAdmin, async (req, res) => {

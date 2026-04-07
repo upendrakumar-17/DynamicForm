@@ -5,11 +5,20 @@ import axios from "axios";
 import Navbar from "@/components/Navbar";
 
 export default function BookPage() {
+  const [step, setStep] = useState(1);
   const [selected, setSelected] = useState("");
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [commonData, setCommonData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    eventType: "",
+    fromDate: "",
+    toDate: "",
+  });
 
   const options = [
     { value: "planner", label: "Planner", icon: "📋", color: "from-blue-500 to-blue-600" },
@@ -29,11 +38,19 @@ export default function BookPage() {
       console.log("res data:", res.data);
 
       setQuestions(res.data);
+      setStep(2);
     } catch (error) {
       console.error("Error fetching questions:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCommonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCommonData({
+      ...commonData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleAnswerChange = (questionId: string, value: string) => {
@@ -44,18 +61,38 @@ export default function BookPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    const commonAnswers = [
+  { question: "Name", response: commonData.name },
+  { question: "Email", response: commonData.email },
+  { question: "Phone", response: commonData.phone },
+  { question: "Event Type", response: commonData.eventType },
+  { question: "From Date", response: commonData.fromDate },
+  { question: "To Date", response: commonData.toDate },
+];
     e.preventDefault();
     try {
+      // const payload = {
+      //   type: selected,
+      //   ...commonData, // 👈 ADD THIS
+      //   answers: questions.map((q: any) => ({
+      //     questionId: q._id,
+      //     response: answers[q._id] || "",
+      //   })),
+      // };
       const payload = {
         type: selected,
-        answers: questions.map((q: any) => ({
-          questionId: q._id,
-          response: answers[q._id] || "",
-        })),
+        commonAnswers,
+        answers: [
+          // Category-specific questions
+          ...questions.map((q: any) => ({
+            questionId: q._id,
+            response: answers[q._id] || "",
+          })),
+        ],
       };
 
       const res = await axios.post(
-        "http://localhost:5000/api/answers",
+        "http://localhost:5000/api/answers/answers",
         payload
       );
       console.log("Response:", res.data);
@@ -65,7 +102,16 @@ export default function BookPage() {
         setSelected("");
         setQuestions([]);
         setAnswers({});
+        setCommonData({
+          name: "",
+          email: "",
+          phone: "",
+          eventType: "",
+          fromDate: "",
+          toDate: "",
+        });
       }, 3000);
+      setStep(1);
     } catch (error) {
       console.error("Error submitting form:", error);
     }
@@ -81,38 +127,133 @@ export default function BookPage() {
             <h1 className="text-4xl sm:text-5xl font-bold text-[var(--foreground)] mb-4">
               Book Your Event
             </h1>
-            <p className="text-lg text-[var(--foreground-secondary)]">
-              Select your role and fill in the event details
+            <p className="text-center mb-6 text-sm text-[var(--foreground-secondary)]">
+              Step {step} of 3
             </p>
           </div>
 
           {/* Role Selection */}
-          <div className="mb-12">
-            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-6 text-center">Select Your Role</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {options.map((option) => {
-                const isSelected = selected === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => handleClick(option.value)}
-                    disabled={loading}
-                    className={`p-6 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 ${
-                      isSelected
+          {step === 1 && (
+            <div className="mb-12">
+              <h2 className="text-xl font-semibold text-[var(--foreground)] mb-6 text-center">Select Your Role</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {options.map((option) => {
+                  const isSelected = selected === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => handleClick(option.value)}
+                      disabled={loading}
+                      className={`p-6 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 ${isSelected
                         ? `bg-gradient-to-br ${option.color} text-white border-transparent shadow-lg`
                         : "bg-[var(--background)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--primary-400)]"
-                    } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                  >
-                    
-                    <h3 className="text-lg font-semibold">{option.label}</h3>
-                  </button>
-                );
-              })}
+                        } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    >
+
+                      <h3 className="text-lg font-semibold">{option.label}</h3>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
+
+          {step === 2 && (
+            <div className="bg-[var(--background)] border border-[var(--border)] rounded-2xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold mb-6">Basic Details</h2>
+
+              <div className="space-y-4">
+                <input
+                  name="name"
+                  placeholder="Full Name"
+                  value={commonData.name}
+                  onChange={handleCommonChange}
+                  className="w-full px-4 py-2 border rounded-lg"
+                />
+
+                <input
+                  name="email"
+                  placeholder="Email"
+                  value={commonData.email}
+                  onChange={handleCommonChange}
+                  className="w-full px-4 py-2 border rounded-lg"
+                />
+
+                <input
+                  name="phone"
+                  placeholder="Phone"
+                  value={commonData.phone}
+                  onChange={handleCommonChange}
+                  className="w-full px-4 py-2 border rounded-lg"
+                />
+
+                <input
+                  name="eventType"
+                  placeholder="Event Type"
+                  value={commonData.eventType}
+                  onChange={handleCommonChange}
+                  className="w-full px-4 py-2 border rounded-lg"
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <div>From </div>
+                    <input
+                      type="date"
+                      name="fromDate"
+                      value={commonData.fromDate}
+                      onChange={handleCommonChange}
+                      className="w-full px-4 py-2 border rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <div>To </div>
+                    <input
+                      type="date"
+                      name="toDate"
+                      value={commonData.toDate}
+                      onChange={handleCommonChange}
+                      className="w-full px-4 py-2 border rounded-lg"
+                    />
+                  </div>
+
+
+                </div>
+
+              </div>
+
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={() => setStep(1)}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  Back
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (
+                      !commonData.name ||
+                      !commonData.email ||
+                      !commonData.phone ||
+                      !commonData.fromDate ||
+                      !commonData.toDate
+                    ) {
+                      alert("Please fill all required fields");
+                      return;
+                    }
+                    setStep(3);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Questions Section */}
-          {questions.length > 0 && (
+          {step === 3 && questions.length > 0 && (
             <div className="bg-[var(--background)] border border-[var(--border)] rounded-2xl shadow-lg p-8">
               {/* Success Message */}
               {submitted && (
@@ -149,6 +290,13 @@ export default function BookPage() {
 
                 {/* Submit Button */}
                 <div className="pt-6 flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="px-6 py-3 bg-[var(--background-secondary)] text-[var(--foreground)] font-semibold rounded-lg border border-[var(--border)]"
+                  >
+                    Back
+                  </button>
                   <button
                     type="submit"
                     className="flex-1 py-3 bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-500)] text-white font-semibold rounded-lg hover:shadow-lg hover:scale-101 transition-all duration-200"

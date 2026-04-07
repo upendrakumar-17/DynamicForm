@@ -15,7 +15,6 @@ export default function ResponsesPage() {
         const fetchResponses = async () => {
             try {
                 const token = localStorage.getItem("token");
-
                 if (!token) {
                     router.push("/admin");
                     return;
@@ -30,7 +29,8 @@ export default function ResponsesPage() {
                     }
                 );
 
-                setResponses(res.data.data); // ✅ important
+                setResponses(res.data.data);
+                console.log("Fetched responses:", res.data.data);
             } catch (err) {
                 console.error(err);
                 alert("Failed to fetch responses");
@@ -74,21 +74,39 @@ export default function ResponsesPage() {
                                     </p>
                                 </div>
 
-                                {/* Answers */}
-                                <div className="flex flex-col gap-3">
-                                    {response.answers.map((ans: any) => (
-                                        <div
-                                            key={ans._id}
-                                            className="border-b pb-2"
-                                        >
-                                            <p className="font-medium">
-                                                {ans.questionId.questionText}
-                                            </p>
-                                            <p className="text-gray-700">
-                                                {ans.response}
-                                            </p>
-                                        </div>
-                                    ))}
+                                {/* Answers: Two Columns */}
+                                <div className="flex flex-col md:flex-row gap-6">
+                                    {/* Left: Common Answers */}
+                                    <div className="flex-1 p-4 rounded-lg">
+                                        <h3 className="font-semibold mb-2">Common Answers</h3>
+                                        {response.commonAnswers.length === 0 ? (
+                                            <p className="text-gray-400">No common answers</p>
+                                        ) : (
+                                            response.commonAnswers.map((c:any, idx:number) => (
+                                                <div key={idx} className="mb-2 border-b pb-1">
+                                                    <span className="font-medium">{c.question}:</span>{" "}
+                                                    <span>{c.response}</span>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+
+                                    {/* Right: Category-Specific Answers */}
+                                    <div className="flex-1  p-4 rounded-lg">
+                                        <h3 className="font-semibold mb-2">Category-Specific Answers</h3>
+                                        {response.answers.length === 0 ? (
+                                            <p className="text-gray-400">No category answers</p>
+                                        ) : (
+                                            response.answers.map((a: any, idx: number) => (
+                                                <div key={idx} className="mb-2 border-b pb-1">
+                                                    <span className="font-medium">
+                                                        {a.questionId?.questionText || "[Deleted question]"}:
+                                                    </span>{" "}
+                                                    <span>{a.response}</span>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
